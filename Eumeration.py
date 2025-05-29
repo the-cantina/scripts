@@ -1,6 +1,8 @@
 import subprocess
 import re
 import ipaddress
+import shutil
+import sys
 
 # Function to validate network input
 def is_valid_network(network):
@@ -66,8 +68,31 @@ def run_gobuster(ip):
     except subprocess.CalledProcessError:
         print(f"[-] Gobuster failed on {ip}")
 
+# Function to check/install Gobuster
+def install_gobuster():
+    # Check if gobuster is already installed
+    if shutil.which("gobuster"):
+        print("[*] Gobuster is already installed.")
+        return True
+    
+    print("[*] Gobuster not found. Attempting to install...")
+
+    # Only supporting Debian/Ubuntu here
+    try:
+        subprocess.run(["sudo", "apt-get", "update"], check=True)
+        subprocess.run(["sudo", "apt-get", "install", "-y", "gobuster"], check=True)
+        print("[+] Gobuster installed successfully.")
+        return True
+    except subprocess.CalledProcessError:
+        print("[-] Failed to install Gobuster. Please install it manually.")
+        return False
+
 # Main logic
 def main():
+    if not install_gobuster():
+        print("[-] Gobuster is required but could not be installed. Exiting.")
+        sys.exit(1)
+
     hosts = discover_hosts(target_network)
     if not hosts:
         print("[!] No hosts found.")
